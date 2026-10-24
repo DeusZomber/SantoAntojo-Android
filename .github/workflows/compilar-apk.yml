@@ -52,6 +52,39 @@ jobs:
         with:
           name: comprobacion-android-no-es-actualizacion
           path: source/SantoAntojoAndroid/app/build/outputs/apk/debug/app-debug.apk
+      - name: Preparar APK release sin firma para firmarla de forma privada
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path("source/SantoAntojoAndroid/app/build.gradle")
+          source=path.read_text()
+          signing="            if (keyStorePath != null && keyStorePassword != null && keyPassword != null && keyAliasName != null)\n                signingConfig signingConfigs.original\n"
+          assert source.count(signing)==1, "Configuración de firma inesperada"
+          source=source.replace(signing,"")
+          guard="// Never produce an unsigned release"
+          assert source.count(guard)==1
+          source=source.split(guard)[0]
+          path.write_text(source)
+          PY
+      - name: Compilar release SIN FIRMA (no instalar)
+        if: github.event_name == 'push'
+        working-directory: source/SantoAntojoAndroid
+        run: gradle --no-daemon --stacktrace :app:assembleRelease
+      - name: Preparar herramientas de firma local
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          mkdir -p unsigned-delivery
+          cp source/SantoAntojoAndroid/app/build/outputs/apk/release/app-release-unsigned.apk unsigned-delivery/
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" unsigned-delivery/
+      - name: Guardar APK SIN FIRMA y herramienta de firma
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-sin-firma-firmar-en-privado
+          path: unsigned-delivery/*
       - name: Restaurar firma ORIGINAL solo para APK actualizable
         if: github.event_name == 'workflow_dispatch'
         env:
