@@ -1,0 +1,8 @@
+{
+  "name": "santo-antojo-campaign-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {"node": ">=20"},
+  "scripts": {"start": "node src/app.mjs", "test": "node --test"}
+}
