@@ -52,6 +52,32 @@ const preview = (input) => {
 };
 export const createServer = ({ accessToken = process.env.SANTO_CAMPAIGN_API_TOKEN } = {}) => http.createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost');
+
+  // Backwards-compatible safe endpoints for Santo Antojo Android 1.6.
+  // We explicitly disable all Meta publishing and paid AI calls in this stage.
+  if (url.pathname.startsWith('/v1/')) {
+    if (!accessToken || accessToken.length < 24)
+      return send(res, 503, { error: 'server_not_configured' });
+    if (!safeEqual(req.headers.authorization, `Bearer ${accessToken}`))
+      return send(res, 401, { error: 'Vincula este celular con el código privado del servidor.' });
+    if (req.method === 'GET' && url.pathname === '/v1/status')
+      return send(res, 200, {
+        aiReady: false, metaReady: false, targets: [], dailyLimit: 3,
+        publishingEnabled: false, mode: 'safe-stage', storagePersistent: false
+      });
+    if (req.method === 'GET' && url.pathname === '/v1/campaigns')
+      return send(res, 200, { campaigns: [] });
+    if (req.method === 'POST' && url.pathname === '/v1/campaigns')
+      return send(res, 503, { error: 'El backend de IA 1.6 todavía requiere activar OPENAI_API_KEY y almacenamiento persistente.' });
+    if (req.method === 'POST' && url.pathname === '/v1/connections/meta')
+      return send(res, 503, { error: 'Falta conectar una aplicación Meta autorizada para publicar.' });
+    if (req.method === 'POST' && /^\\/v1\\/campaigns\\/[a-f0-9-]{36}\\/publish$/.test(url.pathname))
+      return send(res, 403, { error: 'Publicación bloqueada por seguridad. No se envió nada.' });
+    if (req.method === 'POST' && /^\\/v1\\/campaigns\\/[a-f0-9-]{36}\\/review$/.test(url.pathname))
+      return send(res, 409, { error: 'No hay cuentas conectadas para revisión.' });
+    return send(res, 404, { error: 'Campaña no encontrada o ruta no disponible.' });
+  }
+  
   if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { status: 'ok', service: 'santo-antojo-campaigns', mode: 'draft-only', publishingEnabled: false, connectedToMetricool: false });
   if (url.pathname.startsWith('/api/')) {
     if (!accessToken || accessToken.length < 24) return send(res, 503, { error: 'server_not_configured' });
