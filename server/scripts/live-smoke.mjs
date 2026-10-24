@@ -22,4 +22,9 @@ const auth = await get('/api/v1/campaigns/capabilities');
 console.log('HTTPS /api/v1/campaigns/capabilities (sin credencial):', auth.status, auth.data);
 assert.equal(auth.status, 401,
   'El servidor todavia no tiene SANTO_CAMPAIGN_API_TOKEN configurado (503), o la ruta de acceso privado no esta correctamente protegida.');
-console.log('PASS: HTTPS activo, acceso privado protegido, publicaciones deshabilitadas.');
+
+const mobile = await get('/v1/status');
+console.log('HTTPS /v1/status (sin credencial):', mobile.status, mobile.data);
+assert.equal(mobile.status,401, 'La APK 1.6 requiere autorización en todas las rutas privadas.');
+console.log('PASS: HTTPS activo, rutas APK 1.6 protegidas y publicaciones deshabilitadas.');
+
