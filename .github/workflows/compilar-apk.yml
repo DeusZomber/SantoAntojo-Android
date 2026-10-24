@@ -26,6 +26,16 @@ jobs:
           unzip -q "${files[0]}" -d source
           test -f source/SantoAntojoAndroid/app/build.gradle
           test -f source/SantoAntojoAndroid/.github/scripts/make_release.py
+          # La APK se distribuye fuera de Play Store. Mantener compatibilidad
+          # mientras se migra targetSdk en una versión futura.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("source/SantoAntojoAndroid/app/build.gradle")
+          s=p.read_text()
+          anchor="    compileSdk 35\n"
+          assert s.count(anchor)==1
+          p.write_text(s.replace(anchor,anchor+"    lint { disable 'ExpiredTargetSdkVersion' }\n"))
+          PY
           if find source -type f \( -iname '*.p12' -o -iname '*.jks' -o -iname '*.keystore' \) | grep -q .; then
             echo 'Por seguridad, el ZIP no debe incluir archivos privados de firma.'
             exit 1
