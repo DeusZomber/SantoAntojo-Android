@@ -71,9 +71,9 @@ export const createServer = ({ accessToken = process.env.SANTO_CAMPAIGN_API_TOKE
       return send(res, 503, { error: 'El backend de IA 1.6 todavía requiere activar OPENAI_API_KEY y almacenamiento persistente.' });
     if (req.method === 'POST' && url.pathname === '/v1/connections/meta')
       return send(res, 503, { error: 'Falta conectar una aplicación Meta autorizada para publicar.' });
-    if (req.method === 'POST' && /^\\/v1\\/campaigns\\/[a-f0-9-]{36}\\/publish$/.test(url.pathname))
+    if (req.method === 'POST' && url.pathname.startsWith('/v1/campaigns/') && url.pathname.endsWith('/publish'))
       return send(res, 403, { error: 'Publicación bloqueada por seguridad. No se envió nada.' });
-    if (req.method === 'POST' && /^\\/v1\\/campaigns\\/[a-f0-9-]{36}\\/review$/.test(url.pathname))
+    if (req.method === 'POST' && url.pathname.startsWith('/v1/campaigns/') && url.pathname.endsWith('/review'))
       return send(res, 409, { error: 'No hay cuentas conectadas para revisión.' });
     return send(res, 404, { error: 'Campaña no encontrada o ruta no disponible.' });
   }
