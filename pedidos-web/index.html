@@ -39,7 +39,7 @@ const P=[
 ['oreo','Frappé Galleta Oreo',55,'Frappés','🥤','frappe',16,1,'Incluye aderezo y topping'],
 ['espagui','Espagui Creps',55,'Especiales','🍓','special',0,0,'En charolita, preparación especial']
 ];
-const TOP=['Chispas de chocolate','Chocoretas','Chocolate blanco y negro','Coco','Nuez','Galleta Oreo','Almendra fileteada','Galleta de chocolate','Piedritas de chocolate','Lunetas','Chispitas de chocolate'];
+const TOP=['Chispas de chocolate','Chocoretas','Chocolate blanco','Chocolate negro','Coco','Nuez','Galleta Oreo','Almendra fileteada','Galleta de chocolate','Piedritas de chocolate','Lunetas','Chispitas de chocolate'];
 const FRUIT=['Fresa','Plátano','Manzana','Zarzamora','Durazno en almíbar'];
 const FILL=['Queso Philadelphia','Mermelada de zarzamora','Nutella','Cajeta','Lechera','Zarzamora','Crema de almendra'];
 const SAUCE=['Lechera','Chocolate Hershey’s','Nutella'];
@@ -73,14 +73,34 @@ const ING_PHOTO={
 'Kinder Max':22,
 'Chocoretas':23,
 'Galleta Oreo':24,
-'Lunetas':25,
 'Lechera':26,
 'Chocolate Hershey’s':27,
-'Chocolate blanco y negro':28
+'Chocolate blanco':28,
+'Chocolate negro':4
 };
 function photoUrl(id){return 'assets/productos/'+encodeURIComponent(id)+'.webp?v=8';}
-function thumb(name){const i=ING_PHOTO[name];return i===undefined?'':'<img class="ingredient-thumb" loading="lazy" width="44" height="44" src="assets/ingredientes/'+i+'.webp?v=8" alt="'+escapeText(name)+'">';}
-function updatePreview(el){const im=el.parentElement?.querySelector('.ingredient-thumb');if(!im)return;const i=ING_PHOTO[el.value];if(i===undefined){im.style.visibility='hidden';im.removeAttribute('src');}else{im.style.visibility='visible';im.src='assets/ingredientes/'+i+'.webp?v=8';im.alt=el.value;}}
+const EXTRA_IMAGES={
+  'Coco':'coco',
+  'Piedritas de chocolate':'piedritas',
+  'Lunetas':'lunetas',
+  'Galleta de chocolate':'galleta-chocolate'
+};
+function ingredientImage(name){
+  if(EXTRA_IMAGES[name])return 'assets/ingredientes-especiales/'+EXTRA_IMAGES[name]+'.webp?v=9';
+  const id=ING_PHOTO[name];
+  return Number.isInteger(id)?'assets/ingredientes/'+id+'.webp?v=9':'';
+}
+function thumb(name){
+  const url=ingredientImage(name);
+  return url?'<img class="ingredient-thumb" loading="lazy" width="44" height="44" src="'+url+'" alt="'+escapeText(name)+'">':'';
+}
+function updatePreview(el){
+  const im=el.parentElement?.querySelector('.ingredient-thumb');
+  if(!im)return;
+  const url=ingredientImage(el.value);
+  if(!url){im.style.visibility='hidden';im.removeAttribute('src');}
+  else{im.style.visibility='visible';im.src=url;im.alt=el.value;}
+}
 function render(){const cats=['Todos','Fresas','Crepas','Frappés','Especiales'];$('cats').innerHTML=cats.map(c=>'<button class="'+(c===category?'on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</button>').join(''); $('products').innerHTML=P.filter(p=>category==='Todos'||p[3]===category).map(p=>'<article class="product"><div class="art"><img src="'+photoUrl(p[0])+'" alt="'+escapeText(p[1])+'" width="600" height="600" loading="lazy"></div><div class="detail"><h3>'+escapeText(p[1])+'</h3><p>'+escapeText(p[8])+'</p><div class="buy"><strong>'+price(p[2])+'</strong><button aria-label="Agregar" onclick="choose(\''+p[0]+'\')">+</button></div></div></article>').join('');}
 function setCat(c){category=c;render();}
 function closeSheets(){$('shade').classList.add('hidden');$('custom').classList.add('hidden');$('cart').classList.add('hidden');document.body.style.overflow='';}
