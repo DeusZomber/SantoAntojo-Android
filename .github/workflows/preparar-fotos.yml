@@ -1,4 +1,4 @@
-name: Preparar fotos individuales del catalogo Santo Antojo
+name: Corregir fotos reales de Santo Antojo
 on:
   push:
     paths:
@@ -7,39 +7,48 @@ on:
 permissions:
   contents: write
 jobs:
-  recortar:
+  fotos:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Preparar imagenes individuales sin deformar
+      - name: Descargar atlas original correcto de 720x684
+        env:
+          SOURCE_URL: "https://d2jqrm6oza8nb6.cloudfront.net/datasets/e91cfe59-566a-4662-8528-69bb92b76313.webp?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiOWJkNjc0OTFjZGRiOWFkZiIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5Mzk4MjIyNX0.jQdhpWLN3T-p7lQTm_hQivgqhnV4l-a838Wb-T9s-UQ"
         run: |
-          python -m pip install --quiet pillow
+          mkdir -p pedidos-web/assets
+          curl --fail --location --retry 3 "$SOURCE_URL" --output pedidos-web/assets/catalogo.webp
+      - name: Separar fotos reales
+        run: |
+          python -m pip install --quiet Pillow
           python - <<'PY'
           from PIL import Image
           from pathlib import Path
           atlas=Image.open('pedidos-web/assets/catalogo.webp').convert('RGB')
-          assert atlas.size==(720,684), atlas.size
-          dest=Path('pedidos-web/assets')
-          for folder in ('productos','ingredientes'):
-              (dest/folder).mkdir(parents=True, exist_ok=True)
-          names=['f8','f16','f32','divina','jamon','pizza','matcha','capu','oreo','espagui']
-          for i,name in enumerate(names):
-              left=(i%5)*144
-              top=(i//5)*144
-              image=atlas.crop((left,top,left+144,top+144))
-              image.save(dest/'productos'/f'{name}.webp','WEBP',quality=94,method=6)
+          assert atlas.size == (720,684), 'Dimensiones incorrectas '+str(atlas.size)
+          base=Path('pedidos-web/assets')
+          (base/'productos').mkdir(exist_ok=True)
+          (base/'ingredientes').mkdir(exist_ok=True)
+          products=['f8','f16','f32','divina','jamon','pizza','matcha','capu','oreo','espagui']
+          for i,name in enumerate(products):
+              x=(i%5)*144
+              y=(i//5)*144
+              im=atlas.crop((x,y,x+144,y+144))
+              im.save(base/'productos'/(name+'.webp'), 'WEBP', quality=90)
           for i in range(29):
-              left=(i%10)*72
-              top=288+(i//10)*72
-              image=atlas.crop((left,top,left+72,top+72))
-              image.save(dest/'ingredientes'/f'{i}.webp','WEBP',quality=92,method=6)
-          logo=atlas.crop((0,504,180,684))
-          logo.save(dest/'logo.webp','WEBP',quality=94,method=6)
-          print('Integradas',len(names),'fotos de producto, 29 ingredientes, logo')
+              x=(i%10)*72
+              y=288+(i//10)*72
+              im=atlas.crop((x,y,x+72,y+72))
+              im.save(base/'ingredientes'/(str(i)+'.webp'), 'WEBP',quality=88)
+          im=atlas.crop((0,504,180,684))
+          im.save(base/'logo.webp','WEBP',quality=90)
+          print('40 fotos creadas y atlas correcto')
           PY
-      - name: Publicar imagenes en el sitio web
+      - name: Confirmar archivos en GitHub
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add pedidos-web/assets
-          git diff --cached --quiet || (git commit -m 'Separar fotos del catalogo sin recortes de CSS' && git push)
+          if ! git diff --cached --quiet; then
+            git commit -m "Reparar fotos reales de productos y toppings en web"
+            git push
+          fi
