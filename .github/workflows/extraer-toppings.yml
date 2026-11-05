@@ -1,0 +1,39 @@
+name: Publicar imagenes individuales de toppings
+on:
+  push:
+    paths:
+      - '.github/workflows/extraer-toppings.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  extraer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Crear cuatro fotografias individuales
+        run: |
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          atlas=Image.open('pedidos-web/assets/ingredientes-especiales/toppings-2x2.webp').convert('RGB')
+          assert atlas.width==atlas.height and atlas.width%2==0
+          cell=atlas.width//2
+          names=['coco','piedritas','lunetas','galleta-chocolate']
+          folder=Path('pedidos-web/assets/ingredientes-especiales')
+          for i,name in enumerate(names):
+              x=(i%2)*cell
+              y=(i//2)*cell
+              atlas.crop((x,y,x+cell,y+cell)).save(folder/(name+'.webp'),'WEBP',quality=88,method=6)
+          print('Fotos integradas:',names)
+          PY
+      - name: Guardar fotografias
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pedidos-web/assets/ingredientes-especiales
+          if ! git diff --cached --quiet; then
+            git commit -m "Agregar fotos de coco, piedritas, lunetas y galleta de chocolate"
+            git push
+          fi
