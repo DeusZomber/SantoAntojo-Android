@@ -64,8 +64,7 @@ function loadAtlas(){
     if(atlas.naturalWidth!==720||atlas.naturalHeight!==684){return;}
     PRODUCT_IDS.forEach((id,i)=>{PRODUCT_IMAGES[id]=cropAtlas(atlas,(i%5)*144,Math.floor(i/5)*144,144,144)});
     for(let i=0;i<29;i++)INGREDIENT_IMAGES[i]=cropAtlas(atlas,(i%10)*72,288+Math.floor(i/10)*72,72,72);
-    const logo=cropAtlas(atlas,0,504,180,180);
-    const mark=document.querySelector('.brand-logo-photo');if(mark){mark.src=logo;mark.style.opacity='1';}
+    const mark=document.querySelector('.brand-logo-photo');if(mark){mark.src='assets/logo-oficial.svg?v=2';mark.style.opacity='1';}
     document.documentElement.style.setProperty('--hero-photo','url("'+PRODUCT_IMAGES.f16+'")');
     render();
     const selected=document.querySelectorAll('.ingredient-thumb');
