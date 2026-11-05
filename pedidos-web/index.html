@@ -13,8 +13,8 @@
 .select-photo-row{display:flex;align-items:center;gap:10px;margin-top:7px}
 .select-photo-row select{margin-top:0;min-width:0}
 .hero:after{content:"";background:url('assets/catalogo.webp');background-size:500% 475%;background-position:0 0;background-repeat:no-repeat;width:155px;height:155px;right:-8px;bottom:-6px;opacity:.93;border-radius:50%;filter:drop-shadow(0 7px 13px #210c1730)}
-</style><link rel="stylesheet" href="diseno-nuevo.css?v=6"><style>.hero:after{background:url('assets/productos/f16.webp?v=6') center/contain no-repeat!important;opacity:1!important}</style></head><body>
-<header><div class="brand-top"><img class="brand-logo-photo" src="assets/logo-oficial.svg?v=6" alt="Santo Antojo" width="58" height="58"><div><strong>Santo Antojo</strong><small>Postres divinos y más · Huaniqueo</small></div></div><button class="primary" onclick="showCart()">🛍️ <span id="header-count">0</span></button></header>
+</style><link rel="stylesheet" href="diseno-nuevo.css?v=8"><style>.hero:after{background:url('assets/productos/f16.webp?v=8') center/contain no-repeat!important;opacity:1!important}</style></head><body>
+<header><div class="brand-top"><img class="brand-logo-photo" src="assets/logo-oficial.svg?v=8" alt="Santo Antojo" width="58" height="58"><div><strong>Santo Antojo</strong><small>Postres divinos y más · Huaniqueo</small></div></div><button class="primary" onclick="showCart()">🛍️ <span id="header-count">0</span></button></header>
 <main><section class="hero"><span>✨ HECHO PARA ANTOJARTE</span><h1>¡Date un antojo!</h1><p>Elige tus favoritos, personalízalos y pide por WhatsApp.</p><button onclick="document.getElementById('menu').scrollIntoView({behavior:'smooth'})">Ver menú →</button></section>
 <p class="notice">🥄 Preparado a tu gusto &nbsp; · &nbsp; 🛍️ Recoge o pide a domicilio</p>
 <section class="pad" id="menu"><h2>¿Qué se te antoja hoy?</h2><div class="cats" id="cats"></div><div class="products" id="products"></div></section>
@@ -49,11 +49,39 @@ let category='Todos', current=null, cart=[];
 try{cart=JSON.parse(localStorage.getItem('sa_web_cart_v1'))||[];if(!Array.isArray(cart))cart=[];}catch(e){cart=[];}
 function save(){try{localStorage.setItem('sa_web_cart_v1',JSON.stringify(cart));}catch(e){} $('cart-count').textContent=String(cart.reduce((s,x)=>s+x.qty,0));$('header-count').textContent=$('cart-count').textContent;}
 const PRODUCT_POSITION={f8:0,f16:1,f32:2,divina:3,jamon:4,pizza:5,matcha:6,capu:7,oreo:8,espagui:9};
-const ING_PHOTO={'Zarzamora':0,'Mermelada de zarzamora':1,'Chocolate Ferrero':2,'Nutella':3,'Chispas de chocolate':4,'Fresa':5,'Kinder Sorpresa':6,'Almendra fileteada':7,'Plátano':8,'Kinder Bueno':9,'Kinder normal':10,'Cajeta':11,'Nuez':13,'Chantilly':14,'Chispitas de chocolate':16,'Kinder Delice':17,'Manzana':18,'Durazno en almíbar':19,'Chocolate Raffaello':20,'Kinder Max':21,'Queso Philadelphia':22,'Chocoretas':23,'Galleta Oreo':24,'Lechera':25,'Chocolate Hershey’s':27};
-function photoUrl(id){return 'assets/productos/'+encodeURIComponent(id)+'.webp?v=6';}
-function thumb(name){const i=ING_PHOTO[name];return i===undefined?'':'<img class="ingredient-thumb" loading="lazy" width="44" height="44" src="assets/ingredientes/'+i+'.webp?v=6" alt="'+escapeText(name)+'">';}
-function updatePreview(el){const im=el.parentElement?.querySelector('.ingredient-thumb');if(!im)return;const i=ING_PHOTO[el.value];if(i===undefined){im.style.visibility='hidden';im.removeAttribute('src');}else{im.style.visibility='visible';im.src='assets/ingredientes/'+i+'.webp?v=6';im.alt=el.value;}}
-function render(){const cats=['Todos','Fresas','Crepas','Frappés','Especiales'];$('cats').innerHTML=cats.map(c=>'<button class="'+(c===category?'on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</button>').join(''); $('products').innerHTML=P.filter(p=>category==='Todos'||p[3]===category).map(p=>'<article class="product"><div class="art"><img src="'+photoUrl(p[0])+'" alt="'+escapeText(p[1])+'" width="144" height="144" loading="lazy"></div><div class="detail"><h3>'+escapeText(p[1])+'</h3><p>'+escapeText(p[8])+'</p><div class="buy"><strong>'+price(p[2])+'</strong><button aria-label="Agregar" onclick="choose(\''+p[0]+'\')">+</button></div></div></article>').join('');}
+const ING_PHOTO={
+'Zarzamora':0,
+'Mermelada de zarzamora':1,
+'Chocolate Ferrero':2,
+'Nutella':3,
+'Chispas de chocolate':4,
+'Fresa':5,
+'Kinder Sorpresa':6,
+'Almendra fileteada':7,
+'Plátano':8,
+'Kinder Bueno':9,
+'Kinder normal':10,
+'Cajeta':11,
+'Nuez':13,
+'Chantilly':14,
+'Chispitas de chocolate':16,
+'Kinder Delice':17,
+'Manzana':18,
+'Durazno en almíbar':19,
+'Chocolate Raffaello':20,
+'Queso Philadelphia':21,
+'Kinder Max':22,
+'Chocoretas':23,
+'Galleta Oreo':24,
+'Lunetas':25,
+'Lechera':26,
+'Chocolate Hershey’s':27,
+'Chocolate blanco y negro':28
+};
+function photoUrl(id){return 'assets/productos/'+encodeURIComponent(id)+'.webp?v=8';}
+function thumb(name){const i=ING_PHOTO[name];return i===undefined?'':'<img class="ingredient-thumb" loading="lazy" width="44" height="44" src="assets/ingredientes/'+i+'.webp?v=8" alt="'+escapeText(name)+'">';}
+function updatePreview(el){const im=el.parentElement?.querySelector('.ingredient-thumb');if(!im)return;const i=ING_PHOTO[el.value];if(i===undefined){im.style.visibility='hidden';im.removeAttribute('src');}else{im.style.visibility='visible';im.src='assets/ingredientes/'+i+'.webp?v=8';im.alt=el.value;}}
+function render(){const cats=['Todos','Fresas','Crepas','Frappés','Especiales'];$('cats').innerHTML=cats.map(c=>'<button class="'+(c===category?'on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</button>').join(''); $('products').innerHTML=P.filter(p=>category==='Todos'||p[3]===category).map(p=>'<article class="product"><div class="art"><img src="'+photoUrl(p[0])+'" alt="'+escapeText(p[1])+'" width="600" height="600" loading="lazy"></div><div class="detail"><h3>'+escapeText(p[1])+'</h3><p>'+escapeText(p[8])+'</p><div class="buy"><strong>'+price(p[2])+'</strong><button aria-label="Agregar" onclick="choose(\''+p[0]+'\')">+</button></div></div></article>').join('');}
 function setCat(c){category=c;render();}
 function closeSheets(){$('shade').classList.add('hidden');$('custom').classList.add('hidden');$('cart').classList.add('hidden');document.body.style.overflow='';}
 function show(id){closeSheets();$(id).classList.remove('hidden');$('shade').classList.remove('hidden');document.body.style.overflow='hidden';}
