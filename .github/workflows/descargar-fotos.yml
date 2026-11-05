@@ -1,0 +1,26 @@
+name: Incorporar fotos del catalogo
+on:
+  push:
+    paths:
+      - '.github/workflows/descargar-fotos.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fotos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar imagenes optimizadas
+        env:
+          PHOTO_URL: 'https://d2jqrm6oza8nb6.cloudfront.net/datasets/7fe54a06-79e7-4ba0-b12f-b25f0d17fce8.webp?_jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJrZXlIYXNoIjoiYTNlOWI2ZjBiYjc0Y2VjNCIsImJ1Y2tldCI6InJ1bndheS1kYXRhc2V0cyIsInN0YWdlIjoicHJvZCIsImV4cCI6MTc5Mzk4NjkyOH0.6Y93YiU11xHJM6_YZXbhQwz0dD2qaWss3V-JhapeE1c'
+        run: |
+          mkdir -p pedidos-web/assets
+          curl -fL --retry 3 --max-time 120 "$PHOTO_URL" -o pedidos-web/assets/catalogo.webp
+          test $(wc -c < pedidos-web/assets/catalogo.webp) -gt 20000
+      - name: Guardar fotos en el sitio
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pedidos-web/assets/catalogo.webp
+          git diff --cached --quiet || (git commit -m 'Agregar imagenes reales de productos e ingredientes' && git push)
