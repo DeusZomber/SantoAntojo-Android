@@ -1,0 +1,45 @@
+name: Preparar fotos individuales del catalogo Santo Antojo
+on:
+  push:
+    paths:
+      - '.github/workflows/preparar-fotos.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recortar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar imagenes individuales sin deformar
+        run: |
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          atlas=Image.open('pedidos-web/assets/catalogo.webp').convert('RGB')
+          assert atlas.size==(720,684), atlas.size
+          dest=Path('pedidos-web/assets')
+          for folder in ('productos','ingredientes'):
+              (dest/folder).mkdir(parents=True, exist_ok=True)
+          names=['f8','f16','f32','divina','jamon','pizza','matcha','capu','oreo','espagui']
+          for i,name in enumerate(names):
+              left=(i%5)*144
+              top=(i//5)*144
+              image=atlas.crop((left,top,left+144,top+144))
+              image.save(dest/'productos'/f'{name}.webp','WEBP',quality=94,method=6)
+          for i in range(29):
+              left=(i%10)*72
+              top=288+(i//10)*72
+              image=atlas.crop((left,top,left+72,top+72))
+              image.save(dest/'ingredientes'/f'{i}.webp','WEBP',quality=92,method=6)
+          logo=atlas.crop((0,504,180,684))
+          logo.save(dest/'logo.webp','WEBP',quality=94,method=6)
+          print('Integradas',len(names),'fotos de producto, 29 ingredientes, logo')
+          PY
+      - name: Publicar imagenes en el sitio web
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pedidos-web/assets
+          git diff --cached --quiet || (git commit -m 'Separar fotos del catalogo sin recortes de CSS' && git push)
