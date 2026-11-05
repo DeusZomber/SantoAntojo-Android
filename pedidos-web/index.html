@@ -14,7 +14,7 @@
 .select-photo-row select{margin-top:0;min-width:0}
 .hero:after{content:"";background:url('assets/catalogo.webp');background-size:500% 475%;background-position:0 0;background-repeat:no-repeat;width:155px;height:155px;right:-8px;bottom:-6px;opacity:.93;border-radius:50%;filter:drop-shadow(0 7px 13px #210c1730)}
 </style><link rel="stylesheet" href="diseno-nuevo.css?v=4"></head><body>
-<header><div class="brand-top"><img class="brand-logo-photo" src="assets/logo.webp" alt="Santo Antojo" width="58" height="58"><div><strong>Santo Antojo</strong><small>Postres divinos y más · Huaniqueo</small></div></div><button class="primary" onclick="showCart()">🛍️ <span id="header-count">0</span></button></header>
+<header><div class="brand-top"><img class="brand-logo-photo" alt="Santo Antojo" width="58" height="58" style="opacity:0"><div><strong>Santo Antojo</strong><small>Postres divinos y más · Huaniqueo</small></div></div><button class="primary" onclick="showCart()">🛍️ <span id="header-count">0</span></button></header>
 <main><section class="hero"><span>✨ HECHO PARA ANTOJARTE</span><h1>¡Date un antojo!</h1><p>Elige tus favoritos, personalízalos y pide por WhatsApp.</p><button onclick="document.getElementById('menu').scrollIntoView({behavior:'smooth'})">Ver menú →</button></section>
 <p class="notice">🥄 Preparado a tu gusto &nbsp; · &nbsp; 🛍️ Recoge o pide a domicilio</p>
 <section class="pad" id="menu"><h2>¿Qué se te antoja hoy?</h2><div class="cats" id="cats"></div><div class="products" id="products"></div></section>
@@ -50,11 +50,36 @@ try{cart=JSON.parse(localStorage.getItem('sa_web_cart_v1'))||[];if(!Array.isArra
 function save(){try{localStorage.setItem('sa_web_cart_v1',JSON.stringify(cart));}catch(e){} $('cart-count').textContent=String(cart.reduce((s,x)=>s+x.qty,0));$('header-count').textContent=$('cart-count').textContent;}
 const PRODUCT_POSITION={f8:0,f16:1,f32:2,divina:3,jamon:4,pizza:5,matcha:6,capu:7,oreo:8,espagui:9};
 const ING_PHOTO={'Zarzamora':0,'Mermelada de zarzamora':1,'Chocolate Ferrero':2,'Nutella':3,'Chispas de chocolate':4,'Fresa':5,'Kinder Sorpresa':6,'Almendra fileteada':7,'Plátano':8,'Kinder Bueno':9,'Kinder normal':10,'Cajeta':11,'Nuez':13,'Chantilly':14,'Chispitas de chocolate':16,'Kinder Delice':17,'Manzana':18,'Durazno en almíbar':19,'Chocolate Raffaello':20,'Kinder Max':21,'Queso Philadelphia':22,'Chocoretas':23,'Galleta Oreo':24,'Lechera':25,'Chocolate Hershey’s':27};
+const PRODUCT_IMAGES={},INGREDIENT_IMAGES={};
+const PRODUCT_IDS=['f8','f16','f32','divina','jamon','pizza','matcha','capu','oreo','espagui'];
+function cropAtlas(image,x,y,w,h){
+  const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+  const cx=canvas.getContext('2d');if(!cx)return '';
+  cx.drawImage(image,x,y,w,h,0,0,w,h);
+  return canvas.toDataURL('image/webp',0.94);
+}
+function loadAtlas(){
+  const atlas=new Image();
+  atlas.onload=function(){
+    if(atlas.naturalWidth!==720||atlas.naturalHeight!==684){return;}
+    PRODUCT_IDS.forEach((id,i)=>{PRODUCT_IMAGES[id]=cropAtlas(atlas,(i%5)*144,Math.floor(i/5)*144,144,144)});
+    for(let i=0;i<29;i++)INGREDIENT_IMAGES[i]=cropAtlas(atlas,(i%10)*72,288+Math.floor(i/10)*72,72,72);
+    const logo=cropAtlas(atlas,0,504,180,180);
+    const mark=document.querySelector('.brand-logo-photo');if(mark){mark.src=logo;mark.style.opacity='1';}
+    document.documentElement.style.setProperty('--hero-photo','url("'+PRODUCT_IMAGES.f16+'")');
+    render();
+    const selected=document.querySelectorAll('.ingredient-thumb');
+    for(const img of selected){const i=Number(img.getAttribute('data-ingredient-index'));if(Number.isInteger(i)&&INGREDIENT_IMAGES[i])img.src=INGREDIENT_IMAGES[i];}
+  };
+  atlas.onerror=function(){console.warn('No fue posible cargar imágenes de producto')};
+  atlas.src='assets/catalogo.webp?v=20261105';
+}
+
 function productPhoto(id){let idx=PRODUCT_POSITION[id];if(idx===undefined)return '';let col=idx%5,row=Math.floor(idx/5);return 'background-position:'+((col/4)*100)+'% '+((row/3.75)*100)+'%';}
 function ingredientPhoto(name){const i=ING_PHOTO[name];if(i===undefined)return null;const col=i%10,row=Math.floor(i/10);return 'background-position:'+((col/9)*100)+'% '+(((288+row*72)/612)*100)+'%';}
-function thumb(name){const i=ING_PHOTO[name];return i===undefined?'':'<img class="ingredient-thumb" src="assets/ingredientes/'+i+'.webp" alt="'+escapeText(name)+'" loading="lazy">';}
-function updatePreview(el){const wrap=el.parentElement;if(!wrap)return;const preview=wrap.querySelector('.ingredient-thumb');const i=ING_PHOTO[el.value];if(!preview)return;if(i===undefined){preview.style.visibility='hidden';preview.removeAttribute('src');}else{preview.style.visibility='visible';preview.src='assets/ingredientes/'+i+'.webp';preview.alt=el.value;}}
-function render(){const cats=['Todos','Fresas','Crepas','Frappés','Especiales'];$('cats').innerHTML=cats.map(c=>'<button class="'+(c===category?'on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</button>').join(''); $('products').innerHTML=P.filter(p=>category==='Todos'||p[3]===category).map(p=>'<article class="product"><div class="art"><img src="assets/productos/'+p[0]+'.webp" alt="'+escapeText(p[1])+'" decoding="async" loading="lazy"></div><div class="detail"><h3>'+escapeText(p[1])+'</h3><p>'+escapeText(p[8])+'</p><div class="buy"><strong>'+price(p[2])+'</strong><button aria-label="Agregar" onclick="choose(\''+p[0]+'\')">+</button></div></div></article>').join('');}
+function thumb(name){const i=ING_PHOTO[name];return i===undefined?'':'<img class="ingredient-thumb" data-ingredient-index="'+i+'" '+(INGREDIENT_IMAGES[i]?'src="'+INGREDIENT_IMAGES[i]+'"':'')+' alt="'+escapeText(name)+'" loading="lazy">';}
+function updatePreview(el){const wrap=el.parentElement;if(!wrap)return;const preview=wrap.querySelector('.ingredient-thumb');const i=ING_PHOTO[el.value];if(!preview)return;if(i===undefined){preview.style.visibility='hidden';preview.removeAttribute('src');}else{preview.style.visibility='visible';preview.setAttribute('data-ingredient-index',String(i));if(INGREDIENT_IMAGES[i])preview.src=INGREDIENT_IMAGES[i];preview.alt=el.value;}}
+function render(){const cats=['Todos','Fresas','Crepas','Frappés','Especiales'];$('cats').innerHTML=cats.map(c=>'<button class="'+(c===category?'on':'')+'" onclick="setCat(\''+c+'\')">'+c+'</button>').join(''); $('products').innerHTML=P.filter(p=>category==='Todos'||p[3]===category).map(p=>'<article class="product"><div class="art">'+(PRODUCT_IMAGES[p[0]]?'<img src="'+PRODUCT_IMAGES[p[0]]+'" alt="'+escapeText(p[1])+'" loading="lazy">':'<span class="photo-wait" aria-label="Cargando fotografía">🍓</span>')+'</div><div class="detail"><h3>'+escapeText(p[1])+'</h3><p>'+escapeText(p[8])+'</p><div class="buy"><strong>'+price(p[2])+'</strong><button aria-label="Agregar" onclick="choose(\''+p[0]+'\')">+</button></div></div></article>').join('');}
 function setCat(c){category=c;render();}
 function closeSheets(){$('shade').classList.add('hidden');$('custom').classList.add('hidden');$('cart').classList.add('hidden');document.body.style.overflow='';}
 function show(id){closeSheets();$(id).classList.remove('hidden');$('shade').classList.remove('hidden');document.body.style.overflow='hidden';}
@@ -80,5 +105,5 @@ function removeItem(i){cart.splice(i,1);save();showCart();}
 function toggleAddress(){let delivery=document.querySelector('input[name="delivery"]:checked').value==='Domicilio';$('addr-field').classList.toggle('hidden',!delivery);}
 $('order-form').addEventListener('submit',e=>{e.preventDefault();if(!cart.length)return;const name=$('buyer').value.trim();if(!name){alert('Escribe tu nombre');return;}let del=document.querySelector('input[name="delivery"]:checked').value,addr=$('address').value.trim();if(del==='Domicilio'&&!addr){alert('Escribe tu dirección');return;}
 let lines=['🍓 *PEDIDO PARA SANTO ANTOJO*','','👤 Cliente: '+name,'📞 Teléfono: '+($('phone').value.trim()||'No proporcionado'),'🛍️ Modalidad: '+del];if(del==='Domicilio')lines.push('📍 Dirección: '+addr);lines.push('');cart.forEach((it,i)=>{lines.push((i+1)+'. *'+it.title+'* × '+it.qty);it.detail.forEach(d=>lines.push('  • '+d));lines.push('  '+price(it.unit*it.qty)+' MXN','');});lines.push('*Subtotal: '+price(cart.reduce((s,it)=>s+it.unit*it.qty,0))+' MXN*');if(del==='Domicilio')lines.push('🛵 Costo de envío: por confirmar');if($('notes').value.trim())lines.push('📝 Notas: '+$('notes').value.trim());lines.push('🙏 ¿Me confirman disponibilidad y tiempo de preparación?');window.location.href='https://wa.me/'+WA+'?text='+encodeURIComponent(lines.join('\n'));});
-render();save();
+render();save();loadAtlas();
 </script></body></html>
